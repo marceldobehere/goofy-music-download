@@ -1,0 +1,40 @@
+// Click on first song
+function convertToValidFilename(string) {
+    return (string.replace(/[\/|\\:*?"<>]/g, " "));
+}
+
+function download(filename, text) {
+  var element = document.createElement('a');
+  element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  element.setAttribute('download', filename);
+
+  element.style.display = 'none';
+  document.body.appendChild(element);
+
+  element.click();
+
+  document.body.removeChild(element);
+}
+
+(async () => {
+	const audioElem = document.getElementsByTagName("audio")[0];
+
+	let res = [];
+	const divs = document.getElementsByClassName("playTrack");
+
+	for (let div of divs) {
+		console.log(div);
+		div.click();
+		await new Promise(r => setTimeout(r, 50));
+		console.log(audioElem.src)
+		res.push(audioElem.src)
+	}
+	await new Promise(r => setTimeout(r, 300));
+	divs[0].click();
+
+	const bruh = {url: window.location.href, links: res};
+	const txt = JSON.stringify(bruh, null, 2);
+	console.log(txt);
+	download(convertToValidFilename(window.document.title) + ".json", txt)
+})();
+
