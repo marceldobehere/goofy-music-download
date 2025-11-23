@@ -15,8 +15,6 @@ function goofyShortenStr(str, maxSize, endNeeded) {
     return res;
 }
 
-// goofyShortenStr('Isekai de Cheat Skill wo Te ni Shita Ore wa, Genjitsu Sekai wo mo Musou Suru: Level Up wa Jinsei wo Kaeta Season 4 Episode 13 English Subbed', 100, 45);
-
 export function makeStringFsSafe(str) {
     const short = goofyShortenStr(str, 125, 45);
     const res = filenamify(short, {maxLength: 130});
