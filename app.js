@@ -60,35 +60,54 @@ async function getTitleFromUrl(url) {
     return text2.substring(0, spaceIndex) + " -" + text2.substring(spaceIndex);
 }
 
+async function downloadPartStep(url, filePath, filePathTemp) {
+    try {
+        await downloadTitle(url, filePathTemp);
+    } catch (e) {
+        console.error('Error downloading file:', e);
+        await rmFile(filePathTemp);
+    }
+
+    await mvFile(filePathTemp, filePath);
+}
+
 async function downloadAlbum(inputPath, albumName, resultPath) {
     await mkDir(resultPath);
     console.log(` > Downloading album: ${albumName}`);
     const urls = (await readJSONFile(inputPath))["links"];
-    for (const url of urls) {
-        const titleName = await getTitleFromUrl(url);
-        console.log(`  > Downloading ${titleName}`);
 
-        const filePath = `${resultPath}/${titleName}`;
-        const filePathTemp = filePath + "_temp";
+    const chunkArray = (arr, size) =>
+        arr.length > size
+            ? [arr.slice(0, size), ...chunkArray(arr.slice(size), size)]
+            : [arr];
 
-        if (await fileExists(filePathTemp))
-            await rmFile(filePathTemp);
+    const chunks = chunkArray(urls, 4);
+    for (const chunk of chunks) {
+        let temp = [];
+        for (const url of chunk) {
+            const titleName = await getTitleFromUrl(url);
+            console.log(`  > Downloading ${titleName}`);
 
-        if (await fileExists(filePath)) {
-            console.log(`   > Already exists.`);
-            continue;
+            const filePath = `${resultPath}/${titleName}`;
+            const filePathTemp = filePath + "_temp";
+
+            if (await fileExists(filePathTemp))
+                await rmFile(filePathTemp);
+
+            if (await fileExists(filePath)) {
+                console.log(`   > Already exists.`);
+                continue;
+            }
+
+            await sleep(150);
+            temp.push(downloadPartStep(url, filePath, filePathTemp));
         }
-
-        try {
-            await downloadTitle(url, filePathTemp);
-        } catch (e) {
-            console.error('Error downloading file:', e);
-            await rmFile(filePathTemp);
+        if (temp.length > 0) {
+            await Promise.all(temp);
+            await sleep(200);
         }
-        await mvFile(filePathTemp, filePath);
-
-        await sleep(300);
     }
+    await sleep(200);
 }
 
 
